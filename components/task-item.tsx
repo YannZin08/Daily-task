@@ -3,6 +3,7 @@ import { Text, TextInput, TouchableOpacity, View } from "react-native";
 import Animated, { FadeInUp, Layout } from "react-native-reanimated";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Task } from "@/lib/task-types";
+import { useSettings } from "@/lib/settings-provider";
 
 interface TaskItemProps {
   task: Task;
@@ -25,6 +26,7 @@ export function TaskItem({
   onAddSubtask,
   onDeleteSubtask,
 }: TaskItemProps) {
+  const { t } = useSettings();
   const [expanded, setExpanded] = useState(false);
   const [novoPasso, setNovoPasso] = useState("");
 
@@ -57,7 +59,7 @@ export function TaskItem({
           </Text>
           {subtasks.length > 0 && (
             <Text className="text-muted text-xs font-medium mt-1">
-              {concluidos}/{subtasks.length} passos
+              {concluidos}/{subtasks.length} {t("tasks.steps")}
             </Text>
           )}
         </TouchableOpacity>
@@ -99,7 +101,7 @@ export function TaskItem({
             <TextInput
               value={novoPasso}
               onChangeText={setNovoPasso}
-              placeholder="Adicionar passo..."
+              placeholder={t("tasks.addStepPlaceholder")}
               placeholderTextColor={colors.muted}
               onSubmitEditing={confirmarNovoPasso}
               returnKeyType="done"

@@ -2,6 +2,7 @@ import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { BottomSheetModal } from "@/components/financeiro/bottom-sheet-modal";
+import { useSettings } from "@/lib/settings-provider";
 
 interface TipoEscolhaModalProps {
   visible: boolean;
@@ -20,9 +21,10 @@ export function TipoEscolhaModal({
   colors,
   insetsBottom,
 }: TipoEscolhaModalProps) {
+  const { t } = useSettings();
   return (
     <BottomSheetModal visible={visible} onClose={onClose} colors={colors} insetsBottom={insetsBottom} maxHeightRatio={0.6}>
-      <Text className="text-2xl font-bold text-foreground mb-6">Adicionar Despesa</Text>
+      <Text className="text-2xl font-bold text-foreground mb-6">{t("financeiroModal.chooseTypeTitle")}</Text>
 
       <TouchableOpacity
         onPress={onEscolherFixo}
@@ -41,8 +43,8 @@ export function TipoEscolhaModal({
           <IconSymbol name="house" size={24} color={colors.warning} />
         </View>
         <View className="flex-1">
-          <Text className="text-foreground font-bold text-base">Gasto Fixo</Text>
-          <Text className="text-muted text-sm">Recorrente ou parcelado</Text>
+          <Text className="text-foreground font-bold text-base">{t("financeiroModal.fixedOptionTitle")}</Text>
+          <Text className="text-muted text-sm">{t("financeiroModal.fixedOptionSubtitle")}</Text>
         </View>
         <IconSymbol name="chevron.right" size={20} color={colors.muted} />
       </TouchableOpacity>
@@ -64,14 +66,14 @@ export function TipoEscolhaModal({
           <IconSymbol name="cart" size={24} color={colors.primary} />
         </View>
         <View className="flex-1">
-          <Text className="text-foreground font-bold text-base">Despesa do Mês</Text>
-          <Text className="text-muted text-sm">Gasto variável único</Text>
+          <Text className="text-foreground font-bold text-base">{t("financeiroModal.variableOptionTitle")}</Text>
+          <Text className="text-muted text-sm">{t("financeiroModal.variableOptionSubtitle")}</Text>
         </View>
         <IconSymbol name="chevron.right" size={20} color={colors.muted} />
       </TouchableOpacity>
 
       <TouchableOpacity onPress={onClose} className="rounded-2xl py-4 px-4" style={{ backgroundColor: colors.surface2 }}>
-        <Text className="text-center font-semibold text-foreground">Cancelar</Text>
+        <Text className="text-center font-semibold text-foreground">{t("common.cancel")}</Text>
       </TouchableOpacity>
     </BottomSheetModal>
   );

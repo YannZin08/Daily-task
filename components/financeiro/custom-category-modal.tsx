@@ -2,6 +2,7 @@ import React from "react";
 import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
 import * as Haptics from "expo-haptics";
 import { BottomSheetModal } from "@/components/financeiro/bottom-sheet-modal";
+import { useSettings } from "@/lib/settings-provider";
 
 interface CustomCategoryModalProps {
   visible: boolean;
@@ -20,9 +21,10 @@ export function CustomCategoryModal({
   onClose,
   colors,
 }: CustomCategoryModalProps) {
+  const { t } = useSettings();
   const confirmar = () => {
     if (!value.trim()) {
-      Alert.alert("Erro", "Digite o nome da categoria");
+      Alert.alert(t("common.error"), t("financeiroModal.customCategoryError"));
       return;
     }
     onConfirm(value.trim());
@@ -31,7 +33,7 @@ export function CustomCategoryModal({
 
   return (
     <BottomSheetModal visible={visible} onClose={onClose} colors={colors} insetsBottom={0} maxHeightRatio={0.6}>
-      <Text className="text-foreground text-2xl font-bold mb-6">Nova Categoria</Text>
+      <Text className="text-foreground text-2xl font-bold mb-6">{t("financeiroModal.customCategoryTitle")}</Text>
 
       <View
         style={{
@@ -44,11 +46,11 @@ export function CustomCategoryModal({
         }}
       >
         <Text style={{ color: colors.muted, fontSize: 12, fontWeight: "bold", marginBottom: 8 }}>
-          NOME DA CATEGORIA
+          {t("financeiroModal.customCategoryLabel")}
         </Text>
         <TextInput
           style={{ color: colors.foreground, fontSize: 16, fontWeight: "600", minHeight: 44 }}
-          placeholder="Ex: Brinquedos, Livros..."
+          placeholder={t("financeiroModal.customCategoryPlaceholder")}
           placeholderTextColor={"rgba(255,255,255,0.2)"}
           value={value}
           onChangeText={onChangeValue}
@@ -62,11 +64,11 @@ export function CustomCategoryModal({
         onPress={confirmar}
         style={{ backgroundColor: colors.primary, padding: 16, borderRadius: 16, marginBottom: 12, alignItems: "center" }}
       >
-        <Text style={{ color: "white", fontSize: 16, fontWeight: "bold" }}>Confirmar</Text>
+        <Text style={{ color: "white", fontSize: 16, fontWeight: "bold" }}>{t("common.confirm")}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={onClose} style={{ padding: 16, alignItems: "center" }}>
-        <Text style={{ color: colors.muted, fontWeight: "500" }}>Cancelar</Text>
+        <Text style={{ color: colors.muted, fontWeight: "500" }}>{t("common.cancel")}</Text>
       </TouchableOpacity>
     </BottomSheetModal>
   );

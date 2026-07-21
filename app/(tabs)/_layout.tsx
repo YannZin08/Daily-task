@@ -3,11 +3,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { View, Platform, StyleSheet } from "react-native";
 import { HapticTab } from "@/components/haptic-tab";
 import { useColors } from "@/hooks/use-colors";
+import { useSettings } from "@/lib/settings-provider";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 export default function TabLayout() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { t } = useSettings();
   const bottomPadding = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
   const tabBarHeight = 60 + bottomPadding;
 
@@ -38,7 +40,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Tarefas",
+          title: t("nav.tasks"),
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="home" size={24} color={color} />
           ),
@@ -47,7 +49,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="financeiro"
         options={{
-          title: "Financeiro",
+          title: t("nav.financeiro"),
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="attach-money" size={24} color={color} />
           ),
@@ -56,7 +58,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: "Settings",
+          title: t("nav.settings"),
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="settings" size={24} color={color} />
           ),

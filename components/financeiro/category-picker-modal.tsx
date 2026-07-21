@@ -4,12 +4,13 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
 import { Categoria } from "@/lib/financeiro-types";
 import { BottomSheetModal } from "@/components/financeiro/bottom-sheet-modal";
+import { useSettings } from "@/lib/settings-provider";
 
 interface CategoryPickerModalProps {
   visible: boolean;
   categorias: Categoria[];
   selecionada: string | null;
-  onSelect: (label: string) => void;
+  onSelect: (id: string) => void;
   onRequestCustom: () => void;
   onClose: () => void;
   colors: any;
@@ -24,13 +25,14 @@ export function CategoryPickerModal({
   onClose,
   colors,
 }: CategoryPickerModalProps) {
+  const { t } = useSettings();
   return (
     <BottomSheetModal visible={visible} onClose={onClose} colors={colors} insetsBottom={16}>
-      <Text className="text-foreground text-2xl font-bold mb-6">Escolha a Categoria</Text>
+      <Text className="text-foreground text-2xl font-bold mb-6">{t("financeiroModal.categoryPickerTitle")}</Text>
 
       <View style={{ gap: 12 }}>
         {categorias.map((cat) => {
-          const isSelected = selecionada === cat.label;
+          const isSelected = selecionada === cat.id;
           return (
             <TouchableOpacity
               key={cat.id}
@@ -38,7 +40,7 @@ export function CategoryPickerModal({
                 if (cat.id === "outra") {
                   onRequestCustom();
                 } else {
-                  onSelect(cat.label);
+                  onSelect(cat.id);
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 }
               }}
@@ -101,7 +103,7 @@ export function CategoryPickerModal({
       </View>
 
       <TouchableOpacity onPress={onClose} style={{ padding: 16, alignItems: "center", marginTop: 16 }}>
-        <Text style={{ color: colors.muted, fontWeight: "500" }}>Fechar</Text>
+        <Text style={{ color: colors.muted, fontWeight: "500" }}>{t("common.close")}</Text>
       </TouchableOpacity>
     </BottomSheetModal>
   );

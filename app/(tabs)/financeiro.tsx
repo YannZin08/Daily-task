@@ -17,7 +17,8 @@ import { useRouter } from "expo-router";
 import Animated, { FadeInUp, FadeInRight, Layout } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFinanceiro } from "@/hooks/use-financeiro";
-import { formatarMoeda, MESES, Despesa } from "@/lib/financeiro-types";
+import { Despesa } from "@/lib/financeiro-types";
+import { useSettings } from "@/lib/settings-provider";
 import { TipoEscolhaModal } from "@/components/financeiro/tipo-escolha-modal";
 import { GastoFixoModal } from "@/components/financeiro/gasto-fixo-modal";
 import { DespesaModal } from "@/components/financeiro/despesa-modal";
@@ -28,6 +29,7 @@ export default function FinanceiroScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t, months, formatCurrency, locale } = useSettings();
 
   const {
     salario,
@@ -121,10 +123,18 @@ export default function FinanceiroScreen() {
     setShowModalDespesa(true);
   };
 
+  // categoriaSelecionada/categoriaFixoSelecionada guardam o id da categoria;
+  // aqui resolvemos o rótulo traduzido para exibir nos modais (com fallback
+  // para o próprio valor salvo, cobrindo despesas antigas que guardavam o label).
+  const categoriaSelecionadaLabel =
+    categorias.find((c) => c.id === categoriaSelecionada)?.label ?? categoriaSelecionada;
+  const categoriaFixoSelecionadaLabel =
+    categorias.find((c) => c.id === categoriaFixoSelecionada)?.label ?? categoriaFixoSelecionada;
+
   if (isLoading) {
     return (
       <ScreenContainer className="flex-1 bg-background items-center justify-center">
-        <Text className="text-muted">Carregando dados financeiros...</Text>
+        <Text className="text-muted">{t("financeiro.loading")}</Text>
       </ScreenContainer>
     );
   }
@@ -135,9 +145,9 @@ export default function FinanceiroScreen() {
         <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 100 }} showsVerticalScrollIndicator={false}>
           {/* Header com Seletor de Mês */}
           <Animated.View entering={FadeInUp.duration(600)} className="px-6 pt-6 pb-4">
-            <Text className="text-muted text-lg font-medium">Meu</Text>
+            <Text className="text-muted text-lg font-medium">{t("financeiro.headerEyebrow")}</Text>
             <View className="flex-row justify-between items-center">
-              <Text style={{ fontFamily: "Sora_800ExtraBold" }} className="text-foreground text-3xl">Financeiro</Text>
+              <Text style={{ fontFamily: "Sora_800ExtraBold" }} className="text-foreground text-3xl">{t("financeiro.headerTitle")}</Text>
               <TouchableOpacity
                 onPress={() => router.push("/relatorios")}
                 className="bg-surface w-12 h-12 rounded-2xl items-center justify-center border border-white/5"
@@ -151,7 +161,7 @@ export default function FinanceiroScreen() {
                 <Text className="text-2xl text-primary">‹</Text>
               </TouchableOpacity>
               <Text className="text-lg font-bold text-foreground">
-                {MESES[mesSelecionado - 1]} {anoSelecionado}
+                {months[mesSelecionado - 1]} {anoSelecionado}
               </Text>
               <TouchableOpacity onPress={proximoMes} className="p-2">
                 <Text className="text-2xl text-primary">›</Text>
@@ -168,23 +178,23 @@ export default function FinanceiroScreen() {
               style={{ borderRadius: 32, padding: 24, marginBottom: 24, shadowColor: colors.primary, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.35, shadowRadius: 20, elevation: 10 }}
             >
               <View className="flex-row items-center justify-between mb-4">
-                <Text className="text-white/70 text-sm font-semibold uppercase tracking-widest">Saldo Disponível</Text>
+                <Text className="text-white/70 text-sm font-semibold uppercase tracking-widest">{t("financeiro.balanceLabel")}</Text>
                 <View style={{ backgroundColor: colors.accent, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100 }}>
-                  <Text className="text-white text-[10px] font-bold uppercase tracking-wide">Cooperativo</Text>
+                  <Text className="text-white text-[10px] font-bold uppercase tracking-wide">{t("financeiro.badgeCooperativo")}</Text>
                 </View>
               </View>
               <Text style={{ fontFamily: "Sora_800ExtraBold" }} className="text-white text-4xl mb-6">
-                {formatarMoeda(saldoDisponivel)}
+                {formatCurrency(saldoDisponivel)}
               </Text>
 
               <View className="flex-row justify-between border-t border-white/20 pt-6">
                 <View>
-                  <Text className="text-white/60 text-xs font-medium mb-1">Entradas</Text>
-                  <Text className="text-white text-lg font-bold">{formatarMoeda(parseFloat(salario || "0"))}</Text>
+                  <Text className="text-white/60 text-xs font-medium mb-1">{t("financeiro.income")}</Text>
+                  <Text className="text-white text-lg font-bold">{formatCurrency(parseFloat(salario || "0"))}</Text>
                 </View>
                 <View className="items-end">
-                  <Text className="text-white/60 text-xs font-medium mb-1">Gastos</Text>
-                  <Text className="text-white text-lg font-bold">{formatarMoeda(totalGastos)}</Text>
+                  <Text className="text-white/60 text-xs font-medium mb-1">{t("financeiro.expenses")}</Text>
+                  <Text className="text-white text-lg font-bold">{formatCurrency(totalGastos)}</Text>
                 </View>
               </View>
             </LinearGradient>
@@ -196,27 +206,27 @@ export default function FinanceiroScreen() {
               <View className="bg-warning/20 w-10 h-10 rounded-full items-center justify-center mb-3">
                 <IconSymbol name="house" size={20} color={colors.warning} />
               </View>
-              <Text className="text-muted text-xs font-medium mb-1">Gastos Fixos</Text>
-              <Text className="text-foreground text-lg font-bold">{formatarMoeda(totalFixos)}</Text>
+              <Text className="text-muted text-xs font-medium mb-1">{t("financeiro.fixedExpenses")}</Text>
+              <Text className="text-foreground text-lg font-bold">{formatCurrency(totalFixos)}</Text>
             </Animated.View>
 
             <Animated.View entering={FadeInRight.delay(500).duration(600)} className="flex-1 bg-surface p-5 rounded-[24px] border border-white/5">
               <View className="bg-primary/20 w-10 h-10 rounded-full items-center justify-center mb-3">
                 <IconSymbol name="cart" size={20} color={colors.primary} />
               </View>
-              <Text className="text-muted text-xs font-medium mb-1">Variáveis</Text>
-              <Text className="text-foreground text-lg font-bold">{formatarMoeda(totalVariaveis)}</Text>
+              <Text className="text-muted text-xs font-medium mb-1">{t("financeiro.variableExpenses")}</Text>
+              <Text className="text-foreground text-lg font-bold">{formatCurrency(totalVariaveis)}</Text>
             </Animated.View>
           </View>
 
           {/* Configuração de Salário */}
           <View className="px-6 py-4 mb-4">
-            <Text className="text-muted text-xs font-bold uppercase tracking-widest mb-3">Configurar Salário</Text>
+            <Text className="text-muted text-xs font-bold uppercase tracking-widest mb-3">{t("financeiro.salaryConfigTitle")}</Text>
             <View className="bg-surface rounded-2xl flex-row items-center px-4 border border-white/5">
               <IconSymbol name="credit-card" size={20} color={colors.muted} />
               <TextInput
                 className="flex-1 p-4 text-foreground font-semibold"
-                placeholder="Digite seu salário mensal"
+                placeholder={t("financeiro.salaryPlaceholder")}
                 placeholderTextColor="rgba(255,255,255,0.3)"
                 keyboardType="decimal-pad"
                 returnKeyType="done"
@@ -230,7 +240,7 @@ export default function FinanceiroScreen() {
           {/* Gastos Fixos */}
           <View className="px-6 py-4">
             <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-foreground text-lg font-bold">Gastos Fixos</Text>
+              <Text className="text-foreground text-lg font-bold">{t("financeiro.fixedExpenses")}</Text>
             </View>
 
             {despesasDoMes.filter((d) => d.isFixa).length > 0 ? (
@@ -248,10 +258,10 @@ export default function FinanceiroScreen() {
                     </View>
                     <View className="flex-1">
                       <Text className="text-foreground font-bold text-base">{despesa.nome}</Text>
-                      <Text className="text-muted text-xs font-medium">Mensal</Text>
+                      <Text className="text-muted text-xs font-medium">{t("financeiro.monthlyTag")}</Text>
                     </View>
                     <View className="items-end mr-4">
-                      <Text className="text-foreground font-bold text-base">{formatarMoeda(despesa.valor)}</Text>
+                      <Text className="text-foreground font-bold text-base">{formatCurrency(despesa.valor)}</Text>
                     </View>
                     <View className="flex-row gap-2">
                       <TouchableOpacity onPress={() => abrirEdicaoFixo(despesa)} className="p-2">
@@ -268,7 +278,7 @@ export default function FinanceiroScreen() {
                 <View className="bg-surface w-16 h-16 rounded-3xl items-center justify-center mb-4 border border-white/5">
                   <IconSymbol name="house" size={28} color={colors.muted} />
                 </View>
-                <Text className="text-muted text-center px-10">Nenhum gasto fixo neste mês. Toque no + para adicionar aluguel, assinaturas, etc.</Text>
+                <Text className="text-muted text-center px-10">{t("financeiro.fixedEmptyMessage")}</Text>
               </View>
             )}
           </View>
@@ -276,7 +286,7 @@ export default function FinanceiroScreen() {
           {/* Despesas Variáveis */}
           <View className="px-6 py-4">
             <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-foreground text-lg font-bold">Despesas do Mês</Text>
+              <Text className="text-foreground text-lg font-bold">{t("financeiro.monthExpensesTitle")}</Text>
             </View>
 
             {despesasDoMes.filter((d) => !d.isFixa).length > 0 ? (
@@ -294,10 +304,10 @@ export default function FinanceiroScreen() {
                     </View>
                     <View className="flex-1">
                       <Text className="text-foreground font-bold text-base">{despesa.nome}</Text>
-                      <Text className="text-muted text-xs font-medium">{new Date(parseInt(despesa.id, 10)).toLocaleDateString("pt-BR")}</Text>
+                      <Text className="text-muted text-xs font-medium">{new Date(parseInt(despesa.id, 10)).toLocaleDateString(locale)}</Text>
                     </View>
                     <View className="items-end mr-4">
-                      <Text className="text-foreground font-bold text-base">{formatarMoeda(despesa.valor)}</Text>
+                      <Text className="text-foreground font-bold text-base">{formatCurrency(despesa.valor)}</Text>
                     </View>
                     <View className="flex-row gap-2">
                       <TouchableOpacity onPress={() => abrirEdicaoDespesa(despesa)} className="p-2">
@@ -314,7 +324,7 @@ export default function FinanceiroScreen() {
                 <View className="bg-surface w-16 h-16 rounded-3xl items-center justify-center mb-4 border border-white/5">
                   <IconSymbol name="cart" size={28} color={colors.muted} />
                 </View>
-                <Text className="text-muted text-center px-10">Nenhuma despesa neste mês. Toque no + para registrar um gasto.</Text>
+                <Text className="text-muted text-center px-10">{t("financeiro.variableEmptyMessage")}</Text>
               </View>
             )}
           </View>
@@ -366,7 +376,7 @@ export default function FinanceiroScreen() {
         isEditing={!!editingFixo}
         nome={gastoFixo}
         valor={valorFixo}
-        categoria={categoriaFixoSelecionada}
+        categoria={categoriaFixoSelecionadaLabel}
         quantidadeMeses={quantidadeMeses}
         onChangeNome={setGastoFixo}
         onChangeValor={setValorFixo}
@@ -383,7 +393,7 @@ export default function FinanceiroScreen() {
         isEditing={!!editingDespesa}
         nome={nomeDespesa}
         valor={valorDespesa}
-        categoria={categoriaSelecionada}
+        categoria={categoriaSelecionadaLabel}
         onChangeNome={setNomeDespesa}
         onChangeValor={setValorDespesa}
         onAbrirCategoria={() => setShowCategoryModal(true)}
@@ -397,8 +407,8 @@ export default function FinanceiroScreen() {
         visible={showCategoryModal}
         categorias={categorias}
         selecionada={categoriaSelecionada}
-        onSelect={(label) => {
-          setCategoriaSelecionada(label);
+        onSelect={(id) => {
+          setCategoriaSelecionada(id);
           setShowCategoryModal(false);
         }}
         onRequestCustom={() => {
@@ -413,8 +423,8 @@ export default function FinanceiroScreen() {
         visible={showCategoryModalFixo}
         categorias={categorias}
         selecionada={categoriaFixoSelecionada}
-        onSelect={(label) => {
-          setCategoriaFixoSelecionada(label);
+        onSelect={(id) => {
+          setCategoriaFixoSelecionada(id);
           setShowCategoryModalFixo(false);
         }}
         onRequestCustom={() => {
@@ -430,8 +440,8 @@ export default function FinanceiroScreen() {
         value={customCategoryName}
         onChangeValue={setCustomCategoryName}
         onConfirm={async (nome) => {
-          await adicionarCategoriaCustomizada(nome);
-          setCategoriaSelecionada(nome);
+          const nova = await adicionarCategoriaCustomizada(nome);
+          if (nova) setCategoriaSelecionada(nova.id);
           setCustomCategoryName("");
           setShowCustomCategoryModal(false);
         }}
@@ -444,8 +454,8 @@ export default function FinanceiroScreen() {
         value={customCategoryNameFixo}
         onChangeValue={setCustomCategoryNameFixo}
         onConfirm={async (nome) => {
-          await adicionarCategoriaCustomizada(nome);
-          setCategoriaFixoSelecionada(nome);
+          const nova = await adicionarCategoriaCustomizada(nome);
+          if (nova) setCategoriaFixoSelecionada(nova.id);
           setCustomCategoryNameFixo("");
           setShowCustomCategoryModalFixo(false);
         }}

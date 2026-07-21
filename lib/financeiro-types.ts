@@ -22,6 +22,8 @@ export interface Categoria {
   customizada?: boolean;
 }
 
+// Labels vêm de lib/i18n/translations.ts (chave "categories.<id>") — os ids abaixo
+// nunca são traduzidos, só usados como chave de busca e para persistência.
 export const CATEGORIAS_PADRAO: Categoria[] = [
   { id: "alimentacao", label: "Alimentação", icon: "restaurant" },
   { id: "transporte", label: "Transporte", icon: "directions-car" },
@@ -34,17 +36,3 @@ export const CATEGORIAS_PADRAO: Categoria[] = [
   { id: "viagem", label: "Viagem", icon: "flight" },
   { id: "outra", label: "Outra", icon: "more-horiz" },
 ];
-
-export const MESES = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
-];
-
-export const formatarMoeda = (valor: number): string => {
-  // Formatar com ponto para milhares e vírgula para centavos (formato brasileiro)
-  const formatted = valor.toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  return `R$ ${formatted}`;
-};

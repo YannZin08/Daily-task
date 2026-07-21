@@ -1,18 +1,44 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "expo-haptics";
 import { useFocusEffect } from "@react-navigation/native";
 import { CATEGORIAS_PADRAO, Categoria, Despesa } from "@/lib/financeiro-types";
+import { useSettings } from "@/lib/settings-provider";
+import type { TranslationKey } from "@/lib/i18n/translations";
 
 const FINANCEIRO_KEY = "financeiroDados";
 const CATEGORIAS_KEY = "categoriasCustomizadas";
 
+const CATEGORIA_TRANSLATION_KEYS: Record<string, TranslationKey> = {
+  alimentacao: "categories.alimentacao",
+  transporte: "categories.transporte",
+  saude: "categories.saude",
+  educacao: "categories.educacao",
+  diversao: "categories.diversao",
+  compras: "categories.compras",
+  assinatura: "categories.assinatura",
+  utilidades: "categories.utilidades",
+  viagem: "categories.viagem",
+  outra: "categories.outra",
+};
+
 export function useFinanceiro() {
+  const { t } = useSettings();
   const [salario, setSalario] = useState("");
   const [despesas, setDespesas] = useState<Despesa[]>([]);
-  const [categorias, setCategorias] = useState<Categoria[]>(CATEGORIAS_PADRAO);
+  const [categoriasCustomizadas, setCategoriasCustomizadas] = useState<Categoria[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Categorias padrão traduzidas conforme o idioma atual + customizadas do usuário
+  // (o label das customizadas fica como o usuário digitou, sem tradução automática)
+  const categorias = useMemo<Categoria[]>(() => {
+    const padraoTraduzidas = CATEGORIAS_PADRAO.map((cat) => ({
+      ...cat,
+      label: t(CATEGORIA_TRANSLATION_KEYS[cat.id] ?? "categories.outra"),
+    }));
+    return [...padraoTraduzidas, ...categoriasCustomizadas];
+  }, [categoriasCustomizadas, t]);
 
   const hoje = new Date();
   const [mesSelecionado, setMesSelecionado] = useState(hoje.getMonth() + 1);
@@ -34,12 +60,7 @@ export function useFinanceiro() {
       }
 
       const categoriasData = await AsyncStorage.getItem(CATEGORIAS_KEY);
-      if (categoriasData) {
-        const categoriasCustomizadas = JSON.parse(categoriasData);
-        setCategorias([...CATEGORIAS_PADRAO, ...categoriasCustomizadas]);
-      } else {
-        setCategorias(CATEGORIAS_PADRAO);
-      }
+      setCategoriasCustomizadas(categoriasData ? JSON.parse(categoriasData) : []);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {
@@ -79,8 +100,8 @@ export function useFinanceiro() {
 
   const adicionarCategoriaCustomizada = async (nome: string) => {
     if (!nome.trim()) {
-      Alert.alert("Erro", "Digite o nome da categoria");
-      return;
+      Alert.alert(t("common.error"), t("financeiroModal.customCategoryError"));
+      return null;
     }
 
     const novaCategoria: Categoria = {
@@ -90,21 +111,22 @@ export function useFinanceiro() {
       customizada: true,
     };
 
-    const novasCategorias = [...categorias, novaCategoria];
-    setCategorias(novasCategorias);
+    const novasCategoriasCustomizadas = [...categoriasCustomizadas, novaCategoria];
+    setCategoriasCustomizadas(novasCategoriasCustomizadas);
 
-    const categoriasCustomizadas = novasCategorias.filter((c) => c.customizada);
-    await AsyncStorage.setItem(CATEGORIAS_KEY, JSON.stringify(categoriasCustomizadas));
+    await AsyncStorage.setItem(CATEGORIAS_KEY, JSON.stringify(novasCategoriasCustomizadas));
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    return novaCategoria;
   };
 
+  // categoria recebido aqui é o id (ex.: "alimentacao" ou "custom-172...")
   const adicionarDespesa = (nome: string, valor: string, categoria: string | null) => {
     if (!nome.trim() || !valor.trim() || parseFloat(valor) <= 0) {
-      Alert.alert("Erro", "Preencha corretamente a despesa");
+      Alert.alert(t("common.error"), t("financeiroAlert.expenseInvalid"));
       return false;
     }
     if (!categoria) {
-      Alert.alert("Erro", "Selecione uma categoria");
+      Alert.alert(t("common.error"), t("financeiroAlert.selectCategory"));
       return false;
     }
 
@@ -137,10 +159,10 @@ export function useFinanceiro() {
   };
 
   const deletarDespesa = (id: string) => {
-    Alert.alert("Excluir Despesa", "Tem certeza que deseja excluir esta despesa?", [
-      { text: "Cancelar", style: "cancel" },
+    Alert.alert(t("financeiroAlert.deleteExpenseTitle"), t("financeiroAlert.deleteExpenseMessage"), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Excluir",
+        text: t("common.delete"),
         style: "destructive",
         onPress: () => {
           const novasDespesas = despesas.filter((d) => d.id !== id);
@@ -159,7 +181,7 @@ export function useFinanceiro() {
     quantidadeMeses: string
   ) => {
     if (!nome.trim() || !valor.trim() || parseFloat(valor) <= 0) {
-      Alert.alert("Erro", "Preencha corretamente o gasto fixo");
+      Alert.alert(t("common.error"), t("financeiroAlert.fixedInvalid"));
       return false;
     }
 
@@ -178,7 +200,7 @@ export function useFinanceiro() {
         isFixa: true,
         mes,
         ano,
-        categoria: categoria || "outros",
+        categoria: categoria || "outra",
         parcelado: mesesParcelar > 1,
         quantidadeMeses: mesesParcelar,
         mesInicio: mesSelecionado,
@@ -201,7 +223,7 @@ export function useFinanceiro() {
             ...d,
             nome: nome || d.nome,
             valor: valor ? parseFloat(valor) : d.valor,
-            categoria: categoria || d.categoria || "outros",
+            categoria: categoria || d.categoria || "outra",
           }
         : d
     );

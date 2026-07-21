@@ -22,6 +22,7 @@ import Animated, { FadeInUp, FadeIn } from "react-native-reanimated";
 import { ProgressRing } from "@/components/progress-ring";
 import { TaskItem } from "@/components/task-item";
 import { Task } from "@/lib/task-types";
+import { useSettings } from "@/lib/settings-provider";
 
 const STORAGE_KEY = "tasks";
 
@@ -32,6 +33,7 @@ export default function HomeScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { t } = useSettings();
 
   useFocusEffect(
     useCallback(() => {
@@ -87,10 +89,10 @@ export default function HomeScreen() {
   };
 
   const deleteTask = (id: string) => {
-    Alert.alert("Excluir Tarefa", "Tem certeza que deseja excluir esta tarefa?", [
-      { text: "Cancelar", style: "cancel" },
+    Alert.alert(t("tasks.deleteTitle"), t("tasks.deleteMessage"), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Excluir",
+        text: t("common.delete"),
         style: "destructive",
         onPress: () => {
           const updatedTasks = tasks.filter((task) => task.id !== id);
@@ -146,8 +148,8 @@ export default function HomeScreen() {
           {/* Header */}
           <Animated.View entering={FadeInUp.duration(600)} className="mb-8 flex-row items-center justify-between">
             <View className="flex-1 pr-4">
-              <Text className="text-muted text-lg font-medium">Minhas</Text>
-              <Text style={{ fontFamily: "Sora_800ExtraBold" }} className="text-foreground text-3xl">Tarefas Diárias</Text>
+              <Text className="text-muted text-lg font-medium">{t("tasks.headerEyebrow")}</Text>
+              <Text style={{ fontFamily: "Sora_800ExtraBold" }} className="text-foreground text-3xl">{t("tasks.headerTitle")}</Text>
             </View>
 
             {!isLoading && tasks.length > 0 && (
@@ -162,7 +164,7 @@ export default function HomeScreen() {
           {/* Task List */}
           {isLoading ? (
             <View className="flex-1 items-center justify-center">
-              <Text className="text-muted">Carregando tarefas...</Text>
+              <Text className="text-muted">{t("tasks.loading")}</Text>
             </View>
           ) : (
             <FlatList
@@ -187,8 +189,8 @@ export default function HomeScreen() {
                   <View className="bg-surface w-20 h-20 rounded-[30px] items-center justify-center mb-6 border border-white/5">
                     <IconSymbol name="calendar" size={32} color={colors.muted} />
                   </View>
-                  <Text className="text-foreground text-xl font-bold mb-2">Tudo limpo por aqui!</Text>
-                  <Text className="text-muted text-center px-10">Você não tem tarefas pendentes. Toque no + para adicionar uma.</Text>
+                  <Text className="text-foreground text-xl font-bold mb-2">{t("tasks.emptyTitle")}</Text>
+                  <Text className="text-muted text-center px-10">{t("tasks.emptyMessage")}</Text>
                 </View>
               )}
             />
@@ -237,13 +239,13 @@ export default function HomeScreen() {
                 >
                   <View className="w-12 h-1.5 bg-white/10 rounded-full self-center mb-8" />
                   
-                  <Text className="text-foreground text-2xl font-bold mb-6">Nova Tarefa</Text>
+                  <Text className="text-foreground text-2xl font-bold mb-6">{t("tasks.modalTitle")}</Text>
 
                   <View className="bg-white/5 rounded-2xl p-5 border border-white/10">
-                    <Text className="text-muted text-xs font-bold uppercase mb-2">O que precisa ser feito?</Text>
+                    <Text className="text-muted text-xs font-bold uppercase mb-2">{t("tasks.modalLabel")}</Text>
                     <TextInput
                       className="text-foreground text-lg font-semibold"
-                      placeholder="Ex: Comprar café, Estudar React..."
+                      placeholder={t("tasks.modalPlaceholder")}
                       placeholderTextColor="rgba(255,255,255,0.2)"
                       autoFocus
                       value={inputValue}
@@ -252,18 +254,18 @@ export default function HomeScreen() {
                     />
                   </View>
 
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     onPress={addTask}
                     className="bg-primary p-5 rounded-2xl items-center mt-8"
                   >
-                    <Text className="text-white text-lg font-bold">Criar Tarefa</Text>
+                    <Text className="text-white text-lg font-bold">{t("tasks.createButton")}</Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     onPress={() => setModalVisible(false)}
                     className="p-4 items-center mt-2"
                   >
-                    <Text className="text-muted font-medium">Cancelar</Text>
+                    <Text className="text-muted font-medium">{t("common.cancel")}</Text>
                   </TouchableOpacity>
                 </Pressable>
               </Animated.View>

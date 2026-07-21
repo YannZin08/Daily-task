@@ -9,6 +9,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useThemeContext } from "@/lib/theme-provider";
+import { useSettings } from "@/lib/settings-provider";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInUp } from "react-native-reanimated";
 
@@ -16,6 +17,7 @@ export default function SettingsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { colorScheme, setColorScheme } = useThemeContext();
+  const { language, setLanguage, currency, setCurrency, t } = useSettings();
 
   const handleThemeToggle = (value: boolean) => {
     setColorScheme(value ? "dark" : "light");
@@ -48,14 +50,14 @@ export default function SettingsScreen() {
       if (disponivel) {
         await Sharing.shareAsync(file.uri, {
           mimeType: "application/json",
-          dialogTitle: "Salvar backup do Daily Task",
+          dialogTitle: t("settings.shareDialogTitle"),
         });
       } else {
-        Alert.alert("Backup criado", `Não foi possível abrir o compartilhamento. Arquivo salvo em:\n${file.uri}`);
+        Alert.alert(t("settings.exportFallbackTitle"), `${t("settings.exportFallbackMessage")}\n${file.uri}`);
       }
     } catch (error) {
       console.error("Erro ao exportar dados:", error);
-      Alert.alert("Erro", "Não foi possível exportar os dados. Tente novamente.");
+      Alert.alert(t("common.error"), t("settings.exportErrorMessage"));
     }
   };
 
@@ -72,17 +74,17 @@ export default function SettingsScreen() {
       const backup = JSON.parse(conteudo);
 
       if (!backup || typeof backup.dados !== "object") {
-        Alert.alert("Arquivo inválido", "Esse arquivo não parece ser um backup válido do Daily Task.");
+        Alert.alert(t("settings.importInvalidTitle"), t("settings.importInvalidMessage"));
         return;
       }
 
       Alert.alert(
-        "Importar Backup",
-        "Isso vai substituir todas as tarefas e dados financeiros atuais pelos dados desse arquivo. Deseja continuar?",
+        t("settings.importTitle"),
+        t("settings.importConfirmMessage"),
         [
-          { text: "Cancelar", style: "cancel" },
+          { text: t("common.cancel"), style: "cancel" },
           {
-            text: "Importar",
+            text: t("settings.importTitle"),
             style: "destructive",
             onPress: async () => {
               try {
@@ -102,10 +104,10 @@ export default function SettingsScreen() {
                 }
 
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                Alert.alert("Pronto", "Dados importados com sucesso. Abra as abas de Tarefas e Financeiro para conferir.");
+                Alert.alert(t("common.done"), t("settings.importSuccessMessage"));
               } catch (error) {
                 console.error("Erro ao aplicar backup:", error);
-                Alert.alert("Erro", "Não foi possível aplicar o backup.");
+                Alert.alert(t("common.error"), t("settings.importErrorMessage"));
               }
             },
           },
@@ -113,27 +115,27 @@ export default function SettingsScreen() {
       );
     } catch (error) {
       console.error("Erro ao importar dados:", error);
-      Alert.alert("Erro", "Não foi possível ler o arquivo selecionado. Verifique se é um backup válido.");
+      Alert.alert(t("common.error"), t("settings.importReadErrorMessage"));
     }
   };
 
   const handleClearData = () => {
     Alert.alert(
-      "Limpar Dados",
-      "Isso vai apagar todas as suas tarefas e dados financeiros deste aparelho. Essa ação não pode ser desfeita. Deseja continuar?",
+      t("settings.clearTitle"),
+      t("settings.clearConfirmMessage"),
       [
-        { text: "Cancelar", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Limpar Tudo",
+          text: t("settings.clearConfirmButton"),
           style: "destructive",
           onPress: async () => {
             try {
               await AsyncStorage.multiRemove(["tasks", "financeiroDados", "categoriasCustomizadas"]);
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              Alert.alert("Pronto", "Todos os dados foram apagados.");
+              Alert.alert(t("common.done"), t("settings.clearSuccessMessage"));
             } catch (error) {
               console.error("Error clearing data:", error);
-              Alert.alert("Erro", "Não foi possível apagar os dados. Tente novamente.");
+              Alert.alert(t("common.error"), t("settings.clearErrorMessage"));
             }
           },
         },
@@ -149,13 +151,13 @@ export default function SettingsScreen() {
       >
         {/* Header */}
         <Animated.View entering={FadeInUp.duration(600)} className="px-6 pt-6 pb-4">
-          <Text className="text-muted text-lg font-medium">Minhas</Text>
-          <Text style={{ fontFamily: "Sora_800ExtraBold" }} className="text-foreground text-3xl">Configurações</Text>
+          <Text className="text-muted text-lg font-medium">{t("settings.headerEyebrow")}</Text>
+          <Text style={{ fontFamily: "Sora_800ExtraBold" }} className="text-foreground text-3xl">{t("settings.headerTitle")}</Text>
         </Animated.View>
 
         {/* Seção de Aparência */}
         <Animated.View entering={FadeInUp.delay(200).duration(600)} className="px-6 py-4">
-          <Text className="text-foreground text-lg font-bold mb-4">Aparência</Text>
+          <Text className="text-foreground text-lg font-bold mb-4">{t("settings.appearanceSection")}</Text>
 
           {/* Card Tema */}
           <View className="bg-surface rounded-2xl p-5 border border-white/5 flex-row items-center justify-between">
@@ -168,9 +170,9 @@ export default function SettingsScreen() {
                 />
               </View>
               <View className="flex-1">
-                <Text className="text-foreground font-bold text-base">Modo Escuro</Text>
+                <Text className="text-foreground font-bold text-base">{t("settings.darkMode")}</Text>
                 <Text className="text-muted text-xs font-medium">
-                  {colorScheme === "dark" ? "Ativado" : "Desativado"}
+                  {colorScheme === "dark" ? t("settings.enabled") : t("settings.disabled")}
                 </Text>
               </View>
             </View>
@@ -183,9 +185,98 @@ export default function SettingsScreen() {
           </View>
         </Animated.View>
 
+        {/* Seção de Preferências (Idioma / Moeda) */}
+        <Animated.View entering={FadeInUp.delay(300).duration(600)} className="px-6 py-4">
+          <Text className="text-foreground text-lg font-bold mb-4">{t("settings.preferencesSection")}</Text>
+
+          {/* Card Idioma */}
+          <View className="bg-surface rounded-2xl p-5 border border-white/5 mb-3">
+            <View className="flex-row items-center mb-4">
+              <View className="bg-primary/20 w-12 h-12 rounded-2xl items-center justify-center mr-4">
+                <IconSymbol name="info" size={24} color={colors.primary} />
+              </View>
+              <Text className="text-foreground font-bold text-base">{t("settings.language")}</Text>
+            </View>
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={() => setLanguage("pt")}
+                className="flex-1 rounded-xl py-3 items-center border"
+                style={{
+                  backgroundColor: language === "pt" ? colors.primary : "transparent",
+                  borderColor: language === "pt" ? colors.primary : colors.border,
+                }}
+              >
+                <Text
+                  className="font-semibold text-sm"
+                  style={{ color: language === "pt" ? "#FFF" : colors.foreground }}
+                >
+                  {t("settings.languagePt")}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setLanguage("en")}
+                className="flex-1 rounded-xl py-3 items-center border"
+                style={{
+                  backgroundColor: language === "en" ? colors.primary : "transparent",
+                  borderColor: language === "en" ? colors.primary : colors.border,
+                }}
+              >
+                <Text
+                  className="font-semibold text-sm"
+                  style={{ color: language === "en" ? "#FFF" : colors.foreground }}
+                >
+                  {t("settings.languageEn")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Card Moeda */}
+          <View className="bg-surface rounded-2xl p-5 border border-white/5">
+            <View className="flex-row items-center mb-4">
+              <View className="bg-accent/20 w-12 h-12 rounded-2xl items-center justify-center mr-4">
+                <IconSymbol name="credit-card" size={24} color={colors.accent} />
+              </View>
+              <Text className="text-foreground font-bold text-base">{t("settings.currency")}</Text>
+            </View>
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={() => setCurrency("BRL")}
+                className="flex-1 rounded-xl py-3 items-center border"
+                style={{
+                  backgroundColor: currency === "BRL" ? colors.primary : "transparent",
+                  borderColor: currency === "BRL" ? colors.primary : colors.border,
+                }}
+              >
+                <Text
+                  className="font-semibold text-sm"
+                  style={{ color: currency === "BRL" ? "#FFF" : colors.foreground }}
+                >
+                  {t("settings.currencyBRL")}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setCurrency("USD")}
+                className="flex-1 rounded-xl py-3 items-center border"
+                style={{
+                  backgroundColor: currency === "USD" ? colors.primary : "transparent",
+                  borderColor: currency === "USD" ? colors.primary : colors.border,
+                }}
+              >
+                <Text
+                  className="font-semibold text-sm"
+                  style={{ color: currency === "USD" ? "#FFF" : colors.foreground }}
+                >
+                  {t("settings.currencyUSD")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Animated.View>
+
         {/* Seção de Informações */}
         <Animated.View entering={FadeInUp.delay(400).duration(600)} className="px-6 py-4">
-          <Text className="text-foreground text-lg font-bold mb-4">Sobre</Text>
+          <Text className="text-foreground text-lg font-bold mb-4">{t("settings.aboutSection")}</Text>
 
           {/* Card Versão */}
           <View className="bg-surface rounded-2xl p-5 border border-white/5 mb-3">
@@ -195,7 +286,7 @@ export default function SettingsScreen() {
                   <IconSymbol name="info" size={24} color={colors.success} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-foreground font-bold text-base">Versão</Text>
+                  <Text className="text-foreground font-bold text-base">{t("settings.version")}</Text>
                   <Text className="text-muted text-xs font-medium">1.0.0</Text>
                 </View>
               </View>
@@ -210,8 +301,8 @@ export default function SettingsScreen() {
                   <IconSymbol name="code" size={24} color={colors.warning} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-foreground font-bold text-base">Task Daily</Text>
-                  <Text className="text-muted text-xs font-medium">Seu assistente de tarefas e finanças</Text>
+                  <Text className="text-foreground font-bold text-base">{t("settings.appName")}</Text>
+                  <Text className="text-muted text-xs font-medium">{t("settings.appSubtitle")}</Text>
                 </View>
               </View>
             </View>
@@ -220,7 +311,7 @@ export default function SettingsScreen() {
 
         {/* Seção de Dados */}
         <Animated.View entering={FadeInUp.delay(600).duration(600)} className="px-6 py-4">
-          <Text className="text-foreground text-lg font-bold mb-4">Dados</Text>
+          <Text className="text-foreground text-lg font-bold mb-4">{t("settings.dataSection")}</Text>
 
           {/* Card Exportar Backup */}
           <TouchableOpacity
@@ -232,8 +323,8 @@ export default function SettingsScreen() {
                 <IconSymbol name="upload" size={24} color={colors.primary} />
               </View>
               <View className="flex-1">
-                <Text className="text-foreground font-bold text-base">Exportar Backup</Text>
-                <Text className="text-muted text-xs font-medium">Salvar tarefas e financeiro em um arquivo</Text>
+                <Text className="text-foreground font-bold text-base">{t("settings.exportTitle")}</Text>
+                <Text className="text-muted text-xs font-medium">{t("settings.exportSubtitle")}</Text>
               </View>
             </View>
             <IconSymbol name="chevron.right" size={20} color={colors.muted} />
@@ -249,8 +340,8 @@ export default function SettingsScreen() {
                 <IconSymbol name="download" size={24} color={colors.success} />
               </View>
               <View className="flex-1">
-                <Text className="text-foreground font-bold text-base">Importar Backup</Text>
-                <Text className="text-muted text-xs font-medium">Restaurar a partir de um arquivo salvo</Text>
+                <Text className="text-foreground font-bold text-base">{t("settings.importTitle")}</Text>
+                <Text className="text-muted text-xs font-medium">{t("settings.importSubtitle")}</Text>
               </View>
             </View>
             <IconSymbol name="chevron.right" size={20} color={colors.muted} />
@@ -266,8 +357,8 @@ export default function SettingsScreen() {
                 <IconSymbol name="trash" size={24} color={colors.error} />
               </View>
               <View className="flex-1">
-                <Text className="text-foreground font-bold text-base">Limpar Dados</Text>
-                <Text className="text-muted text-xs font-medium">Remover todas as tarefas e despesas</Text>
+                <Text className="text-foreground font-bold text-base">{t("settings.clearTitle")}</Text>
+                <Text className="text-muted text-xs font-medium">{t("settings.clearSubtitle")}</Text>
               </View>
             </View>
             <IconSymbol name="chevron.right" size={20} color={colors.muted} />
